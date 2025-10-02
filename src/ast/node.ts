@@ -188,7 +188,7 @@ export interface FunctionNode extends BaseNode {
 
 export interface FunctionCallNode extends BaseNode {
   type: 'function_call';
-  identifier: TypeSpecifierNode;
+  identifier: TypeSpecifierNode | PostfixNode;
   lp: LiteralNode;
   args: any[];
   rp: LiteralNode;

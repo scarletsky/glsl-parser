@@ -1,4 +1,27 @@
-import type { AstNode, Scope } from '../ast/index.js';
+import type {
+  AstNode,
+  IdentifierNode,
+  Scope,
+  TypeSpecifierNode,
+} from '../ast/index.js';
+
+const getSpecifierIdentifier = (
+  specifier: TypeSpecifierNode['specifier']
+): IdentifierNode | undefined => {
+  if (!specifier) {
+    return undefined;
+  }
+
+  if (specifier.type === 'identifier') {
+    return specifier;
+  }
+
+  if (specifier.type === 'struct') {
+    return specifier.typeName;
+  }
+
+  return undefined;
+};
 
 export const renameBindings = (
   scope: Scope,
@@ -48,10 +71,16 @@ export const renameTypes = (
         node.type === 'function_call' &&
         'specifier' in node.identifier
       ) {
-        node.identifier.specifier.identifier = mangle(
-          node.identifier.specifier.identifier,
-          node
+        const specifierIdentifier = getSpecifierIdentifier(
+          node.identifier.specifier
         );
+
+        if (specifierIdentifier) {
+          specifierIdentifier.identifier = mangle(
+            specifierIdentifier.identifier,
+            node
+          );
+        }
       } else {
         console.log(node);
         throw new Error(`Binding for type ${node.type} not recognized`);
@@ -75,18 +104,51 @@ export const renameFunctions = (
         node.type === 'function_call' &&
         node.identifier.type === 'postfix'
       ) {
-        node.identifier.expression.identifier.specifier.identifier = mangle(
-          node.identifier.expression.identifier.specifier.identifier,
-          node
-        );
+        const postfixExpression = node.identifier.expression as any;
+
+        if (
+          postfixExpression?.identifier &&
+          'specifier' in postfixExpression.identifier
+        ) {
+          const specifierIdentifier = getSpecifierIdentifier(
+            postfixExpression.identifier.specifier
+          );
+
+          if (specifierIdentifier) {
+            specifierIdentifier.identifier = mangle(
+              specifierIdentifier.identifier,
+              node
+            );
+          }
+        } else if (
+          postfixExpression &&
+          'specifier' in postfixExpression
+        ) {
+          const specifierIdentifier = getSpecifierIdentifier(
+            postfixExpression.specifier
+          );
+
+          if (specifierIdentifier) {
+            specifierIdentifier.identifier = mangle(
+              specifierIdentifier.identifier,
+              node
+            );
+          }
+        }
       } else if (
         node.type === 'function_call' &&
         'specifier' in node.identifier
       ) {
-        node.identifier.specifier.identifier = mangle(
-          node.identifier.specifier.identifier,
-          node
+        const specifierIdentifier = getSpecifierIdentifier(
+          node.identifier.specifier
         );
+
+        if (specifierIdentifier) {
+          specifierIdentifier.identifier = mangle(
+            specifierIdentifier.identifier,
+            node
+          );
+        }
         // Structs type names also become constructors. However, their renaming is
         // handled by bindings
       }
